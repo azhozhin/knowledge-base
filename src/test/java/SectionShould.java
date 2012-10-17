@@ -92,7 +92,11 @@ public class SectionShould {
 	
 	@Test 
 	public void beAbleToConstructPathInHierarchy(){
+		assertEquals("1", s1.getHierarchyPath());
+		assertEquals("2", s2.getHierarchyPath());
+		assertEquals("2 / 2_1", s2s1.getHierarchyPath());
 		assertEquals("1 / 1_1 / 1_1_2", s1s1s2.getHierarchyPath());
+		assertEquals("2 / 2_2 / 2_2_1", s2s2s1.getHierarchyPath());
 	}
 	
 
