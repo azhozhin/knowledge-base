@@ -7,13 +7,17 @@ public class Article {
 	private Section section;
 	
 	public Article(String shortName) {
-		this(shortName,shortName);
+		this(shortName,shortName,"");
 	}
 	
 	public Article(String shortName, String fullName){
+		this(shortName,fullName,"");
+	}
+
+	public Article(String shortName, String fullName, String text) {
 		this.shortName=shortName;
 		this.fullName=fullName;
-		this.text="";
+		this.text=text;
 	}
 
 	public String getShortName() {
