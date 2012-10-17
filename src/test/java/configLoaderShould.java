@@ -56,6 +56,7 @@ public class configLoaderShould {
 		assertNotNull(art);
 		assertEquals("Beggining", art.getShortName());
 		assertEquals("In the beggining, Far far away", art.getFullName());
+		assertEquals("Here goes some text", art.getText().trim());
 	}
 	
 	@Test
