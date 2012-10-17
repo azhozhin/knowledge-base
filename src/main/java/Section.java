@@ -37,8 +37,10 @@ public class Section {
 	}
 
 	public void addSection(Section subSection) {
-		sections.add(subSection);
-		subSection.parent=this;
+		if (subSection.parent==null){
+			sections.add(subSection);
+			subSection.parent=this;
+		}
 	}
 
 	public List<Section> getSections() {

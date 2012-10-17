@@ -94,5 +94,20 @@ public class SectionShould {
 	public void beAbleToConstructPathInHierarchy(){
 		assertEquals("1 / 1_1 / 1_1_2", s1s1s2.getHierarchyPath());
 	}
- 
+	
+
+	@Test
+	public void notBeAllowedToBePlacedToTwoDifferentSections(){
+		Section root=new Section();
+		Section s1=new Section("sect1");
+		Section s2=new Section("sect2");
+		root.addSection(s1);
+		root.addSection(s2);
+		
+		// this should be not allowed
+		s1.addSection(s2);
+		
+		assertEquals(root, s1.getParent());
+		assertEquals(root, s2.getParent());
+	}
 }
