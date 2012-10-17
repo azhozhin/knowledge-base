@@ -50,12 +50,10 @@ public class ConfigLoader {
 
 	private List<Section> loadSections(Node node){
 		List<Section> result=new ArrayList<Section>();
-		System.err.println("loadSections");
 		NodeList children = node.getChildNodes();
 		for (int i=0;i<children.getLength();i++){
 			Node n=children.item(i);
 			if (n.getNodeType()==Node.ELEMENT_NODE){
-				System.out.println(n.getNodeName());
 				if ("section".equals(n.getNodeName().toLowerCase())){
 					Section s=loadSection(n);
 					result.add(s);
@@ -68,17 +66,11 @@ public class ConfigLoader {
 	private Section loadSection(Node node) {
 		Section result;
 		
-		System.err.println("loadSection");
-		String shortName="";
-		String fullName="";
-		
-		shortName=node.getAttributes().getNamedItem("shortname").getNodeValue();
-		fullName=node.getAttributes().getNamedItem("fullname").getNodeValue();
+		String shortName=node.getAttributes().getNamedItem("shortname").getNodeValue();
+		String fullName=node.getAttributes().getNamedItem("fullname").getNodeValue();
 		
 		result=new Section(shortName, fullName);
 		
-		System.out.println("section shortname:"+shortName);
-		System.out.println("section fullname:"+fullName);
 		NodeList children=node.getChildNodes();
 		for (int i=0;i<children.getLength();i++){
 			Node n=children.item(i);
@@ -94,7 +86,6 @@ public class ConfigLoader {
 						result.addSection(s);
 					}
 				}
-				System.out.println(n.getNodeName());
 			}
 		}
 		return result;
@@ -102,12 +93,10 @@ public class ConfigLoader {
 
 	private List<Article> loadArticles(Node node) {
 		List<Article> result=new ArrayList<Article>();
-		System.err.println("loadArticles");
 		NodeList children = node.getChildNodes();
 		for (int i=0;i<children.getLength();i++){
 			Node n=children.item(i);
 			if (n.getNodeType()==Node.ELEMENT_NODE){
-				System.out.println(n.getNodeName());
 				if ("article".equals(n.getNodeName().toLowerCase())){
 					Article a=loadArticle(n);
 					result.add(a);
@@ -120,7 +109,6 @@ public class ConfigLoader {
 	private Article loadArticle(Node node) {
 		Article result;
 		
-		System.err.println("loadArticle");
 		String shortName=node.getAttributes().getNamedItem("shortname").getNodeValue();
 		String fullName=node.getAttributes().getNamedItem("fullname").getNodeValue();
 		String text="";
