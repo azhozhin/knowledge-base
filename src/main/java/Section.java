@@ -8,60 +8,55 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinColumns;
 import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderColumn;
 
 @Entity
 public class Section {
-	
+
 	@Id
 	@Column(name="section_id")
 	@GeneratedValue
 	private Long id;
-	
-	@Column(name="is_root")
-	private boolean root=false;
-	
+
 	@Column(name="short_name")
 	private String shortName;
-	
+
 	@Column(name="full_name")
 	private String fullName;
-	
+
 	@ManyToOne
-	@JoinColumn(name="section_id", insertable=false, updatable=false)
+	@JoinColumn(name="section_id", insertable=false, updatable=false, nullable = true )
 	private Section parent;
-	
-	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY)
 	@JoinTable(
 			name="section_article",
 			joinColumns=@JoinColumn(name="section_id"),
 			inverseJoinColumns=@JoinColumn(name="article_id")
-	)
+			)
 	@OrderColumn(name="article_index")
 	private final List<Article> articles;
-	
+
 	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	@OrderColumn(name="section_index")
 	private final List<Section> sections;
-	
+
 	public Section(){
 		// construct root
 		this("","");
-		this.root=true;
 	}
-	
+
 	public Section(String shortName){
 		this(shortName,shortName);
 	}
-	
+
 	public Section(String shortName, String fullName){
 		this.shortName=shortName;
 		this.fullName=fullName;
+		this.parent=null;
 		articles=new ArrayList<Article>();
 		sections=new ArrayList<Section>();
 	}
@@ -93,19 +88,19 @@ public class Section {
 	public List<Section> getSections() {
 		return sections;
 	}
-	
+
 	public String getShortName() {
 		return shortName;
 	}
-	
+
 	public void setShortName(String shortName) {
 		this.shortName = shortName;
 	}
-	
+
 	public String getFullName() {
 		return fullName;
 	}
-	
+
 	public void setFullName(String fullName) {
 		this.fullName = fullName;
 	}
@@ -113,28 +108,30 @@ public class Section {
 	public void setParent(Section parent){
 		this.parent=parent;
 	}
-	
+
 	public Section getParent(){
 		return parent;
 	}
-	
-	public boolean isRoot() {
-		return root;
-	}
-	
+
 	public String getHierarchyNumber() {
-		String myHierarchyNumber=String.valueOf(getParent().getSections().indexOf(this)+1);
-		if (getParent().isRoot()){
+		if (parent==null || parent.getSections().indexOf(this)==-1){
+			return "";
+		}
+		String myHierarchyNumber=String.valueOf(parent.getSections().indexOf(this)+1);
+		if (parent.parent==null){
 			return myHierarchyNumber;
 		}else{
-			String parentHierarchyNumber=getParent().getHierarchyNumber();
+			String parentHierarchyNumber=parent.getHierarchyNumber();
 			return parentHierarchyNumber+"."+myHierarchyNumber;
 		}
 	}
 
 	public String getHierarchyPath() {
+		if (parent==null){
+			return "";
+		}
 		String myName=getShortName();
-		if (getParent().isRoot()){
+		if (parent.parent==null){
 			return myName;
 		}else{
 			String parentName=getParent().getHierarchyPath();
@@ -167,8 +164,6 @@ public class Section {
 				return false;
 		} else if (!parent.equals(other.parent))
 			return false;
-		if (root != other.root)
-			return false;
 		if (shortName == null) {
 			if (other.shortName != null)
 				return false;
@@ -177,6 +172,6 @@ public class Section {
 		return true;
 	}
 
-	
+
 
 }
