@@ -54,12 +54,16 @@ public class DAOShould {
 		
 		assertNotSame(root, result);
 		
-		//recursiveCheck(root,result);
-		
 		assertEquals("1", result.getSections().get(0).getHierarchyNumber());
 		assertEquals("2", result.getSections().get(1).getHierarchyNumber());
 		assertEquals("3", result.getSections().get(2).getHierarchyNumber());
 		assertEquals("4", result.getSections().get(3).getHierarchyNumber());
+		
+		assertEquals("1.1", result.getSections().get(0).getSections().get(0).getHierarchyNumber());
+		
+		recursiveCheck(root,result);
+		
+		
 	}
 	
 	
