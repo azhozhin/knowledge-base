@@ -25,11 +25,18 @@ public class SectionDAO {
 	
 	public static Section load() {
 		Session session=HibernateUtil.getSessionFactory().getCurrentSession();
-		// sort by Section.root property - this should only one
-		Query q=session.createQuery("from Section s order by s.root desc");
+
+		// load full tree
+		Query q=session.createQuery("from Section s left join fetch s.sections left join fetch s.articles order by s.parent asc");
+		@SuppressWarnings("unchecked")
 		List<Section> result=(List<Section>)q.list();
-	
-		return result.get(0);
+
+		if (result.size()>0){
+			result.get(0).setParent(null);
+			return result.get(0);
+		}else{
+			return new Section();
+		}
 	}
 
 }
