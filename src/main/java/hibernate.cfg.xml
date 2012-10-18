@@ -16,7 +16,7 @@
 		<property name="show_sql">true</property>
 		<property name="hbm2ddl.auto">create</property>
 		
-		<mapping class="Section" />
-		<mapping class="Article" />
+		<mapping class="domain.Section" />
+		<mapping class="domain.Article" />
 	</session-factory>
 </hibernate-configuration>
