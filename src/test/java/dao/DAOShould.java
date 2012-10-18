@@ -45,6 +45,7 @@ public class DAOShould {
 	@Test
 	public void beAbleToSaveAndLoadComplexTree() {
 		SectionDAO.beginTransaction();
+		SectionDAO.removeAll();
 		SectionDAO.save(root);
 		SectionDAO.commitTransaction();
 		

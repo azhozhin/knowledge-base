@@ -30,13 +30,20 @@ public class SectionDAO {
 		Session session=HibernateUtil.getSessionFactory().getCurrentSession();
 
 		// load full tree
-		//Query q=session.createQuery("from Section s left join fetch s.sections left join fetch s.articles order by s.parent asc");
-		Query q=session.createQuery("from Section s");
+		Query q=session.createQuery("from Section s left join fetch s.sections left join fetch s.articles");
+		//Query q=session.createQuery("from Section s");
 		@SuppressWarnings("unchecked")
 		List<Section> result=(List<Section>)q.list();
 
 		return result.get(0);
 		
+	}
+
+	public static void removeAll() {
+		Session session=HibernateUtil.getSessionFactory().getCurrentSession();
+		
+		Query q=session.createQuery("delete Section");
+		q.executeUpdate();
 	}
 
 }
