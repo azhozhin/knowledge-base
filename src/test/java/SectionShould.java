@@ -80,7 +80,7 @@ public class SectionShould {
 
 	@Test
 	public void beAbleToConstructItsNumberInHierarchy(){
-		
+		assertEquals("", root.getHierarchyNumber());
 		assertEquals("1", s1.getHierarchyNumber());
 		assertEquals("2", s2.getHierarchyNumber());
 		assertEquals("3", s3.getHierarchyNumber());
@@ -92,6 +92,7 @@ public class SectionShould {
 	
 	@Test 
 	public void beAbleToConstructPathInHierarchy(){
+		assertEquals("", root.getHierarchyPath());
 		assertEquals("1", s1.getHierarchyPath());
 		assertEquals("2", s2.getHierarchyPath());
 		assertEquals("2 / 2_1", s2s1.getHierarchyPath());
