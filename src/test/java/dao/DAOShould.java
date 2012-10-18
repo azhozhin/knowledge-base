@@ -1,7 +1,12 @@
+package dao;
 import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import dao.SectionDAO;
+import domain.Article;
+import domain.Section;
 
 
 public class DAOShould {
@@ -49,7 +54,12 @@ public class DAOShould {
 		
 		assertNotSame(root, result);
 		
-		recursiveCheck(root,result);
+		//recursiveCheck(root,result);
+		
+		assertEquals("1", result.getSections().get(0).getHierarchyNumber());
+		assertEquals("2", result.getSections().get(1).getHierarchyNumber());
+		assertEquals("3", result.getSections().get(2).getHierarchyNumber());
+		assertEquals("4", result.getSections().get(3).getHierarchyNumber());
 	}
 	
 	

@@ -1,9 +1,17 @@
+package utils;
 import static org.junit.Assert.*;
 
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import utils.Link;
+import utils.TreeNode;
+import utils.WebService;
+
+import domain.Article;
+import domain.Section;
 
 public class WebServiceShould {
 	Section root;

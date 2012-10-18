@@ -1,3 +1,4 @@
+package domain;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +29,10 @@ public class Section {
 	private String fullName;
 
 	@ManyToOne
-	@JoinColumn(name="section_id", insertable=false, updatable=false, nullable = true )
+	@JoinColumn(name="parent_section_id" )
 	private Section parent;
 
-	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.LAZY)
+	@OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	@JoinTable(
 			name="section_article",
 			joinColumns=@JoinColumn(name="section_id"),

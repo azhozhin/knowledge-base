@@ -1,9 +1,15 @@
+package config;
 import static org.junit.Assert.*;
 
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import config.ConfigLoader;
+
+import domain.Article;
+import domain.Section;
 
 
 public class configLoaderShould {

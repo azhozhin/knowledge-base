@@ -1,3 +1,8 @@
+package utils;
+import dao.SectionDAO;
+import domain.Article;
+import domain.Section;
+
 
 public class WebService {
 
