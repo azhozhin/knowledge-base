@@ -43,6 +43,8 @@
 					<p:toolbarGroup align="right">
 						<p:menuButton value="Data">
 							<p:menuitem value="Upload" onclick="fileUploadDialog.show()" />
+							<p:menuitem value="Reindex" actionListener="#{treeBean.reindex()}" update=":form:growl"/>
+							<p:menuitem value="Search" onclick="searchDialog.show()" />
 						</p:menuButton>
 					</p:toolbarGroup>
 				</p:toolbar>
@@ -84,6 +86,8 @@
 			</p:layoutUnit>
 
 		</p:layout>
+		
+		
 	</h:form>
 	
 	<p:dialog id="fileUploadDialog" widgetVar="fileUploadDialog" header="File upload">
@@ -174,6 +178,7 @@
 		<script type="text/javascript">
 		function handleArticleEditDialogRequest(xhr, status, args) {  
 	        if(args.validationFailed) {  
+	        	// FIXME: there is bug with primefaces editor, after shake it is not responsive
 	            //jQuery('#articleEditDialog').effect("shake", { times:3 }, 100);  
 	        } else {  
 	        	articleEditDialog.hide()
@@ -202,6 +207,7 @@
 		<script type="text/javascript">
 		function handleNewArticleEditDialogRequest(xhr, status, args) {  
 	        if(args.validationFailed) {  
+	        	// FIXME: there is bug with primefaces editor, after shake it is not responsive
 	            //jQuery('#newArticleEditDialog').effect("shake", { times:3 }, 100);  
 	        } else {  
 	        	newArticleEditDialog.hide();
@@ -213,19 +219,29 @@
 	
 	<p:confirmDialog id="confirmDeleteArticleDialog" message="You are about to delete article. Are you Sure?" header="Delete Article?" widgetVar="confirmDeleteArticleDialog">
 	<h:form>
-		<p:commandButton id="confirm" value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteArticleDialog.hide()"  
+		<p:commandButton value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteArticleDialog.hide()"  
                     actionListener="#{treeBean.deleteArticle}" />  
-        <p:commandButton id="decline" value="No" onclick="confirmDeleteArticleDialog.hide()" type="button" />  
+        <p:commandButton value="No" onclick="confirmDeleteArticleDialog.hide()" type="button" />  
 	</h:form>
 	</p:confirmDialog>
 	
 	<p:confirmDialog id="confirmDeleteSectionDialog" message="You are about to delete section. Are you Sure?" header="Delete Article?" widgetVar="confirmDeleteSectionDialog">
 	<h:form acceptcharset="UTF-8" enctype="application/form-data">
-		<p:commandButton id="confirm" value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteSectionDialog.hide()"  
+		<p:commandButton value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteSectionDialog.hide()"  
                     actionListener="#{treeBean.deleteSection}" />  
-        <p:commandButton id="decline" value="No" onclick="confirmDeleteSectionDialog.hide()" type="button" />  
+        <p:commandButton value="No" onclick="confirmDeleteSectionDialog.hide()" type="button" />  
 	</h:form>
 	</p:confirmDialog>
 
+	<p:dialog id="searchDialog" widgetVar="searchDialog">
+	<h:form>
+		<p:inputText id="searchString" value="#{treeBean.searchString}" size="80"/>
+		<p:commandButton value="search" actionListener="#{treeBean.search()}" update=":form:growl,searchResults"/>
+	
+		<p:dataList id="searchResults" value="#{treeBean.searchResult}" var="article" itemType="square">
+	 		<h:outputText value="#{article.fullName}"/>
+		</p:dataList>
+	</h:form>
+	</p:dialog>
 </h:body>
 </html>

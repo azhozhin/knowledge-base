@@ -2,6 +2,7 @@ package webapp;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.faces.application.FacesMessage;
@@ -10,22 +11,15 @@ import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
 import javax.xml.parsers.ParserConfigurationException;
 
-
 import org.primefaces.event.FileUploadEvent;
-import org.primefaces.event.NodeCollapseEvent;
-import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeSelectEvent;
-import org.primefaces.event.NodeUnselectEvent;
-
-import org.primefaces.model.DefaultTreeNode;
-
 import org.primefaces.model.TreeNode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import config.ConfigLoader;
-
 
 import utils.EntityHolder;
 import utils.Utils;
@@ -34,6 +28,10 @@ import utils.WebAppHelper;
 import dao.DAO;
 import domain.Article;
 import domain.Section;
+
+/**
+ * TreeBean represents elements binding to JSF page 
+ */
 
 @SessionScoped
 @ManagedBean
@@ -54,6 +52,9 @@ public class TreeBean implements Serializable {
 	
 	private TreeNode selectedNode;
 	
+	private String searchString="";
+	private List<Article> searchResult=new ArrayList<>();
+	
 	private String breadCrumb="";
 	
 	private List<Section> thisSectionSubSections;
@@ -66,9 +67,10 @@ public class TreeBean implements Serializable {
 	}
 	
 	public void reloadTree(){
-		DAO.beginTransaction();
-		rootSection= DAO.loadSectionRootLevel();
-		DAO.commitTransaction();
+		
+		DAO.getInstance().beginTransaction();
+		rootSection= DAO.getInstance().loadSectionRootLevel();
+		DAO.getInstance().commitTransaction();
 		
 		treeRoot = Utils.makeTreeRoot(rootSection);
 		
@@ -79,22 +81,8 @@ public class TreeBean implements Serializable {
 		}
 	}  
 
-	public TreeNode getRoot() {
-		return treeRoot;
-	}
-
-	public TreeNode getSelectedNode() {
-		return selectedNode;
-	}
-
-	public void setSelectedNode(TreeNode selectedNode) {
-		this.selectedNode = selectedNode;
-	}
-
 	public void onNodeSelect(NodeSelectEvent event) {
 		Section currentNodeSection;
-		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Selected", event.getTreeNode().toString());
-		FacesContext.getCurrentInstance().addMessage(null, message);
 		
 		TreeNode treeNode=event.getTreeNode();
 		EntityHolder entityHolder=(EntityHolder)treeNode.getData();
@@ -104,14 +92,15 @@ public class TreeBean implements Serializable {
 			
 			// we have no child nodes, lets try load some
 			if (treeNode.getChildCount()==0){
-				DAO.beginTransaction();
-				//rootSection=DAO.mergeSection(rootSection);
-				DAO.updateSection(rootSection);
+				DAO.getInstance().beginTransaction();
+				DAO.getInstance().updateSection(rootSection);
 				currentNodeSection=Utils.findPersistentSection(rootSection,currentNodeSection);
-				currentNodeSection=DAO.loadSectionOneLevel(currentNodeSection);
-				DAO.commitTransaction();
+				currentNodeSection=DAO.getInstance().loadSectionOneLevel(currentNodeSection);
+				DAO.getInstance().commitTransaction();
 				
 				Utils.loadNodeSection(event.getTreeNode(), currentNodeSection);
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Loaded new content"));
+				
 			}
 			
 			articleRendered=false;
@@ -123,14 +112,16 @@ public class TreeBean implements Serializable {
 			Article currentNodeArticle=(Article)entityHolder.getRef();
 			currentNodeSection=currentNodeArticle.getSection();
 
-			DAO.beginTransaction();
-			currentArticle=DAO.loadArticle(currentNodeArticle);
-			DAO.commitTransaction();
+			DAO.getInstance().beginTransaction();
+			currentArticle=DAO.getInstance().loadArticle(currentNodeArticle);
+			DAO.getInstance().commitTransaction();
 			
 			articleRendered=true;
 			currentSection=null;
 			thisSectionArticles=null;
 			thisSectionSubSections=null;
+			
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Loaded article"));
 		}
 		
 	}
@@ -216,6 +207,74 @@ public class TreeBean implements Serializable {
 			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select anything"));
 		}
 	}
+
+	public void upload(FileUploadEvent event) { 
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(event.getFile().getFileName() + " is uploaded."));
+		logger.info(event.getFile().getFileName() + " is uploaded.");
+		ConfigLoader configLoader;
+		try {
+			configLoader = new ConfigLoader();
+			Section newRootSection=configLoader.parseFromFile(event.getFile().getFileName());
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Data sucessfully parsed"));
+			logger.info("Successfully parsed");
+			
+			DAO.getInstance().beginTransaction();
+			DAO.getInstance().removeAllSections();
+			DAO.getInstance().saveSection(newRootSection);
+			DAO.getInstance().commitTransaction();
+			
+			reloadTree();
+			
+		} catch (ParserConfigurationException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "ParserConfigurationException"));
+			logger.info(e.toString());
+		} catch (SAXException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "SAXException"));
+			logger.info(e.toString());
+			e.printStackTrace();
+		} catch (IOException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "IOException"));
+			logger.info(e.toString());
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void reindex(){
+		try{
+			DAO.getInstance().beginTransaction();
+			DAO.getInstance().reindex();
+			DAO.getInstance().commitTransaction();
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Reindexing started"));
+		}catch(Exception e){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception!", "Exception"));
+			logger.info(e.toString());
+		}
+	}
+	
+	public void search(){
+		try{
+			searchResult=DAO.getInstance().articleFullTextSearch(searchString);
+			logger.info(searchString);
+
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Search done."));
+		}catch(Exception e){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception!", "Exception"));
+			logger.info(e.toString());
+		}
+	}
+	
+	public TreeNode getRoot() {
+		return treeRoot;
+	}
+
+	public TreeNode getSelectedNode() {
+		return selectedNode;
+	}
+
+	public void setSelectedNode(TreeNode selectedNode) {
+		this.selectedNode = selectedNode;
+	}
 	
 	public String getBreadCrumb() {
 		if (selectedNode==null){
@@ -288,35 +347,19 @@ public class TreeBean implements Serializable {
 		this.thisSectionArticles = thisSectionArticles;
 	}
 	
-	public void upload(FileUploadEvent event) { 
-		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(event.getFile().getFileName() + " is uploaded."));
-		logger.info(event.getFile().getFileName() + " is uploaded.");
-		ConfigLoader configLoader;
-		try {
-			configLoader = new ConfigLoader();
-			Section newRootSection=configLoader.parseFromFile(event.getFile().getFileName());
-			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Data sucessfully parsed"));
-			logger.info("Successfully parsed");
-			
-			DAO.beginTransaction();
-			DAO.removeAllSections();
-			DAO.saveSection(newRootSection);
-			DAO.commitTransaction();
-			
-			reloadTree();
-			
-		} catch (ParserConfigurationException e) {
-			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "ParserConfigurationException"));
-			logger.info(e.toString());
-		} catch (SAXException e) {
-			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "SAXException"));
-			logger.info(e.toString());
-			e.printStackTrace();
-		} catch (IOException e) {
-			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "IOException"));
-			logger.info(e.toString());
-			e.printStackTrace();
-		}
-		
+	public String getSearchString() {
+		return searchString;
+	}
+
+	public void setSearchString(String searchString) {
+		this.searchString = searchString;
+	}
+
+	public List<Article> getSearchResult() {
+		return searchResult;
+	}
+
+	public void setSearchResult(List<Article> searchResult) {
+		this.searchResult = searchResult;
 	}
 }
