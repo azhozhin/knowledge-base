@@ -9,6 +9,7 @@ import domain.Section;
 
 /**
  * WebApp helper contains methods for manipulation articles and section in PrimeFaces.TreeNode and in Database 
+ * It is separated for better testing
  */
 public class WebAppHelper {
 
