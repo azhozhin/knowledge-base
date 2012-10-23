@@ -1,16 +1,19 @@
 package config;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import domain.Article;
 import domain.Section;
@@ -18,29 +21,30 @@ import domain.Section;
 
 public class ConfigLoader {
 
-	private String source;
 	private Document dom=null;
-	private Section rootSection;
-	
-	public void setStringSource(String data) {
-		this.source=data;
+
+	private DocumentBuilder db;
+
+	public ConfigLoader() throws ParserConfigurationException{
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		db=dbf.newDocumentBuilder();
 	}
 
-	public Section parseFromSource() {
-		rootSection=new Section();
+	public Section parseFromSource(String source) throws SAXException, IOException {
+		InputStream is=new ByteArrayInputStream(source.getBytes());
+		dom=db.parse(is);
 		
-		try{
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		return loadAll(dom);
+	}
+	
+	public Section parseFromFile(String filename) throws SAXException, IOException{
+		dom=db.parse(filename);
 
-			DocumentBuilder db=dbf.newDocumentBuilder();
-			
-			InputStream is=new ByteArrayInputStream(source.getBytes());
-			dom=db.parse(is);
-			
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		
+		return loadAll(dom);
+	}
+
+	public Section loadAll(Document dom){
+		Section rootSection=new Section();
 		if(dom!=null){
 			Element root=dom.getDocumentElement();
 			List<Section> sections=loadSections(root);
@@ -48,7 +52,6 @@ public class ConfigLoader {
 				rootSection.addSection(s);
 			}
 		}
-		
 		return rootSection;
 	}
 
@@ -66,15 +69,21 @@ public class ConfigLoader {
 		}
 		return result;
 	}
-	
+
 	private Section loadSection(Node node) {
 		Section result;
+
+		String shortName;
+		String fullName;
 		
-		String shortName=node.getAttributes().getNamedItem("shortname").getNodeValue();
-		String fullName=node.getAttributes().getNamedItem("fullname").getNodeValue();
-		
+		Node shortNameNode=node.getAttributes().getNamedItem("shortname");
+		Node fullNameNode=node.getAttributes().getNamedItem("fullname");
+
+		shortName=shortNameNode!=null ? shortNameNode.getNodeValue() : "";
+		fullName=fullNameNode!=null ? fullNameNode.getNodeValue() : "";
+
 		result=new Section(shortName, fullName);
-		
+
 		NodeList children=node.getChildNodes();
 		for (int i=0;i<children.getLength();i++){
 			Node n=children.item(i);
@@ -113,10 +122,17 @@ public class ConfigLoader {
 	private Article loadArticle(Node node) {
 		Article result;
 		
-		String shortName=node.getAttributes().getNamedItem("shortname").getNodeValue();
-		String fullName=node.getAttributes().getNamedItem("fullname").getNodeValue();
-		String text="";
+		String shortName;
+		String fullName;
+
+		Node shortNameNode=node.getAttributes().getNamedItem("shortname");
+		Node fullNameNode=node.getAttributes().getNamedItem("fullname");
 		
+		shortName=shortNameNode!=null ? shortNameNode.getNodeValue() : "";
+		fullName=fullNameNode!=null ? fullNameNode.getNodeValue() : "";
+		
+		String text="";
+
 		NodeList children = node.getChildNodes();
 		for (int i=0;i<children.getLength();i++){
 			Node n=children.item(i);
@@ -125,11 +141,10 @@ public class ConfigLoader {
 				break;
 			}
 		}
-		
+
 		result=new Article(shortName, fullName, text);
-		
+
 		return result;
 	}
-	
 
 }
