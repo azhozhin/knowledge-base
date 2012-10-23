@@ -7,6 +7,8 @@
 		<property name="hibernate.connection.username">kb</property>
 		<property name="hibernate.connection.password">kb</property>
 		<property name="hibernate.connection.characterEncoding">utf-8</property>
+		<property name="hibernate.connection.charSet" >utf-8</property>
+		
 		<property name="connection.pool_size">1</property>
 		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 		
