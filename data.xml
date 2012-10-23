@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sections>
+	<section shortname='section one' fullname='this is long title for section one'>
+		<articles>
+			<article shortname='Beggining' fullname='In the beggining, Far far away'>
+				<![CDATA[
+Here goes some text
+Sometimes it can be <b>bold</b> or even <i>italic</i>
+				]]>
+			</article>
+		</articles>
+		<sections>
+			<section shortname='section 1.1' fullname='long title for section 1.1'>
+				<articles>
+					<article shortname='Ending' fullname='In the ending, Far far away'>
+					<![CDATA[
+<h2>Header</h2>
+Here goes some text
+Sometimes it can be <b>bold</b> or even <i>italic</i>
+					]]>
+					</article>
+				</articles>
+			</section>
+			<section shortname='section 1.2' fullname='long title for section 1.2'>
+				<sections>
+					<section shortname="section 1.2.1">
+						<sections>
+							<section shortname="section 1.2.1.1" >
+								<sections>
+									<section shortname="section 1.2.1.1.1">
+										<sections>
+											<section shortname="section 1.2.1.1.1.1" />
+										</sections>
+									</section>
+								</sections>
+							</section>
+						</sections>
+					</section>
+				</sections>
+			</section>
+		</sections>
+	</section>
+</sections>
