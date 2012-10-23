@@ -8,6 +8,7 @@
 	xmlns:p="http://primefaces.org/ui">
 
 <h:head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
 <style>
 .ui-widget,
 .ui-widget .ui-widget
@@ -37,9 +38,15 @@
 							<p:menuitem value="Edit" onclick="articleEditDialog.show()" />
 							<p:menuitem value="Delete" onclick="confirmDeleteArticleDialog.show()" />
 						</p:menuButton>
+						
+					</p:toolbarGroup>
+					<p:toolbarGroup align="right">
+						<p:menuButton value="Data">
+							<p:menuitem value="Upload" onclick="fileUploadDialog.show()" />
+						</p:menuButton>
 					</p:toolbarGroup>
 				</p:toolbar>
-				<p:tree value="#{treeBean.root}" var="node" dynamic="true"	cache="false" selectionMode="single" selection="#{treeBean.selectedNode}" id="tree">
+				<p:tree value="#{treeBean.root}" var="node" dynamic="true"	cache="false" selectionMode="single" selection="#{treeBean.selectedNode}" id="tree" style="width:342px">
 					<p:ajax event="select"	update=":form:growl,tree,:form:viewSide,:form_se:section_edit,:form_ae:article_edit" listener="#{treeBean.onNodeSelect}" />
 					<p:treeNode>
 						<h:outputText value="#{node.shortName}" />
@@ -77,22 +84,42 @@
 			</p:layoutUnit>
 
 		</p:layout>
-
 	</h:form>
+	
+	<p:dialog id="fileUploadDialog" widgetVar="fileUploadDialog" header="File upload">
+	<h:form>
+		<p:fileUpload 
+			fileUploadListener="#{treeBean.upload}" 
+			allowTypes="/(\.|\/)(xml)$/" 
+			sizeLimit="100000" 
+			description="Select file" 
+			update=":form:tree,:form:viewSide,:form:growl" 
+			oncomplete="fileUploadDialog.hide()"/>
+	</h:form>
+	</p:dialog>
 	
 	<p:dialog id="sectionEditDialog" widgetVar="sectionEditDialog">
 	<h:form id="form_se">
 		<p:panelGrid id="section_edit" columns="2">
 			<p:outputLabel for="sectionShortName" value="shortName"/>
-			<p:inputText id="sectionShortName" value="#{treeBean.currentSection.shortName}" size="80"/>
+			<p:inputText id="sectionShortName" value="#{treeBean.currentSection.shortName}" size="80" required="true"/>
 			
 			<p:outputLabel for="sectionFullName" value="fullName"/>
-			<p:inputText id="sectionFullName" value="#{treeBean.currentSection.fullName}" size="80"/>
+			<p:inputText id="sectionFullName" value="#{treeBean.currentSection.fullName}" size="80" required="true"/>
 			<p:commandButton 
 				actionListener="#{treeBean.saveSection}" 
 				update=":form:tree,:form:viewSide,:form:growl"
-				value="save section" oncomplete="sectionEditDialog.hide()"/>
+				value="save section" oncomplete="handleSectionEditDialogRequest(xhr, status, args)"/>
 		</p:panelGrid>
+		<script type="text/javascript">
+		function handleSectionEditDialogRequest(xhr, status, args) {  
+	        if(args.validationFailed) {  
+	            jQuery('#sectionEditDialog').effect("shake", { times:3 }, 100);  
+	        } else {  
+	        	sectionEditDialog.hide()
+	        }  
+	    }  
+		</script>
 	</h:form>
 	</p:dialog>
 	
@@ -100,39 +127,59 @@
 	<h:form>
 		<p:panelGrid id="new_section_edit" columns="2">
 			<p:outputLabel for="newSectionShortName" value="shortName"/>
-			<p:inputText id="newSectionShortName" value="#{treeBean.newSection.shortName}" size="80"/>
+			<p:inputText id="newSectionShortName" value="#{treeBean.newSection.shortName}" size="80" required="true"/>
 			
 			<p:outputLabel for="newSectionFullName" value="fullName"/>
-			<p:inputText id="newSectionFullName" value="#{treeBean.newSection.fullName}" size="80"/>
+			<p:inputText id="newSectionFullName" value="#{treeBean.newSection.fullName}" size="80" required="true"/>
 			<p:commandButton 
 				actionListener="#{treeBean.newSectionSameLevel}" 
 				update=":form:tree,:form:viewSide,:form:growl"
-				value="save same level" oncomplete="newSectionEditDialog.hide()"/>
+				value="save same level" oncomplete="handleNewSectionEditDialogRequest(xhr, status, args)"/>
 				
 			<p:commandButton 
 				actionListener="#{treeBean.newSectionSubling}" 
 				update=":form:tree,:form:viewSide,:form:growl"
-				value="save as subling" oncomplete="newSectionEditDialog.hide()"/>
+				value="save as subling" oncomplete="handleNewSectionEditDialogRequest(xhr, status, args)"/>
 		</p:panelGrid>
+		<script type="text/javascript">
+		function handleNewSectionEditDialogRequest(xhr, status, args) {  
+	        if(args.validationFailed) {  
+	            jQuery('#newSectionEditDialog').effect("shake", { times:3 }, 100);  
+	        } else {  
+	        	newSectionEditDialog.hide()
+	        }  
+	    }  
+		</script>
 	</h:form>
 	</p:dialog>
+	
+	
 	
 	<p:dialog id="articleEditDialog" widgetVar="articleEditDialog">
 	<h:form id="form_ae">
 		<p:panelGrid id="article_edit" columns="2">
 			<p:outputLabel for="articleShortName" value="shortName"/>
-			<p:inputText id="articleShortName" value="#{treeBean.currentArticle.shortName}" size="80"/>
+			<p:inputText id="articleShortName" value="#{treeBean.currentArticle.shortName}" size="80" required="true"/>
 			
 			<p:outputLabel for="articleFullName" value="fullName"/>
-			<p:inputText id="articleFullName" value="#{treeBean.currentArticle.fullName}" size="80"/>
+			<p:inputText id="articleFullName" value="#{treeBean.currentArticle.fullName}" size="80" required="true"/>
 			
-			<p:outputLabel for="articleText" value="text"/>
-			<p:editor id="articleText"  value="#{treeBean.currentArticle.text}"/>
+			<p:outputLabel for="articleText" value="text" />
+			<p:editor id="articleText"  value="#{treeBean.currentArticle.text}" />
 			<p:commandButton 
 				actionListener="#{treeBean.saveArticle}" 
 				update="article_edit,:form:tree,:form:viewSide,:form:growl"
-				value="save article" oncomplete="articleEditDialog.hide()"/>
+				value="save article" oncomplete="handleArticleEditDialogRequest(xhr, status, args)"/>
 		</p:panelGrid>
+		<script type="text/javascript">
+		function handleArticleEditDialogRequest(xhr, status, args) {  
+	        if(args.validationFailed) {  
+	            //jQuery('#articleEditDialog').effect("shake", { times:3 }, 100);  
+	        } else {  
+	        	articleEditDialog.hide()
+	        }  
+	    }  
+		</script>
 	</h:form>
 	</p:dialog>
 	
@@ -140,18 +187,27 @@
 	<h:form>
 		<p:panelGrid id="new_article_edit" columns="2">
 			<p:outputLabel for="newArticleShortName" value="shortName"/>
-			<p:inputText id="newArticleShortName" value="#{treeBean.newArticle.shortName}" size="80"/>
+			<p:inputText id="newArticleShortName" value="#{treeBean.newArticle.shortName}" size="80" required="true"/>
 			
 			<p:outputLabel for="newArticleFullName" value="fullName"/>
-			<p:inputText id="newArticleFullName" value="#{treeBean.newArticle.fullName}" size="80"/>
+			<p:inputText id="newArticleFullName" value="#{treeBean.newArticle.fullName}" size="80" required="true"/>
 			
 			<p:outputLabel for="newArticleText" value="text"/>
-			<p:editor id="newArticleText"  value="#{treeBean.newArticle.text}"/>
+			<p:editor id="newArticleText"  value="#{treeBean.newArticle.text}" />
 			<p:commandButton 
 				actionListener="#{treeBean.saveNewArticle}" 
 				update="new_article_edit,:form:tree,:form:viewSide,:form:growl"
-				value="save article" oncomplete="newArticleEditDialog.hide()"/>
+				value="save article" oncomplete="handleNewArticleEditDialogRequest(xhr, status, args)"/>
 		</p:panelGrid>
+		<script type="text/javascript">
+		function handleNewArticleEditDialogRequest(xhr, status, args) {  
+	        if(args.validationFailed) {  
+	            //jQuery('#newArticleEditDialog').effect("shake", { times:3 }, 100);  
+	        } else {  
+	        	newArticleEditDialog.hide();
+	        }  
+	    }  
+		</script>
 	</h:form>
 	</p:dialog>
 	
@@ -164,7 +220,7 @@
 	</p:confirmDialog>
 	
 	<p:confirmDialog id="confirmDeleteSectionDialog" message="You are about to delete section. Are you Sure?" header="Delete Article?" widgetVar="confirmDeleteSectionDialog">
-	<h:form>
+	<h:form acceptcharset="UTF-8" enctype="application/form-data">
 		<p:commandButton id="confirm" value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteSectionDialog.hide()"  
                     actionListener="#{treeBean.deleteSection}" />  
         <p:commandButton id="decline" value="No" onclick="confirmDeleteSectionDialog.hide()" type="button" />  

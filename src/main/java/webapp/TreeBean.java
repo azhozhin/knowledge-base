@@ -1,5 +1,6 @@
 package webapp;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
@@ -7,8 +8,10 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
+import javax.xml.parsers.ParserConfigurationException;
 
 
+import org.primefaces.event.FileUploadEvent;
 import org.primefaces.event.NodeCollapseEvent;
 import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeSelectEvent;
@@ -17,6 +20,11 @@ import org.primefaces.event.NodeUnselectEvent;
 import org.primefaces.model.DefaultTreeNode;
 
 import org.primefaces.model.TreeNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import config.ConfigLoader;
 
 
 import utils.EntityHolder;
@@ -30,6 +38,8 @@ import domain.Section;
 @SessionScoped
 @ManagedBean
 public class TreeBean implements Serializable {
+	
+	Logger logger = LoggerFactory.getLogger(TreeBean.class);
 
 	private static final long serialVersionUID = 1L;
 
@@ -278,5 +288,35 @@ public class TreeBean implements Serializable {
 		this.thisSectionArticles = thisSectionArticles;
 	}
 	
-	
+	public void upload(FileUploadEvent event) { 
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(event.getFile().getFileName() + " is uploaded."));
+		logger.info(event.getFile().getFileName() + " is uploaded.");
+		ConfigLoader configLoader;
+		try {
+			configLoader = new ConfigLoader();
+			Section newRootSection=configLoader.parseFromFile(event.getFile().getFileName());
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Data sucessfully parsed"));
+			logger.info("Successfully parsed");
+			
+			DAO.beginTransaction();
+			DAO.removeAllSections();
+			DAO.saveSection(newRootSection);
+			DAO.commitTransaction();
+			
+			reloadTree();
+			
+		} catch (ParserConfigurationException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "ParserConfigurationException"));
+			logger.info(e.toString());
+		} catch (SAXException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "SAXException"));
+			logger.info(e.toString());
+			e.printStackTrace();
+		} catch (IOException e) {
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Exception! ", "IOException"));
+			logger.info(e.toString());
+			e.printStackTrace();
+		}
+		
+	}
 }
