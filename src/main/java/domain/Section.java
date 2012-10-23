@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -20,7 +19,7 @@ import org.hibernate.annotations.CascadeType;
 
 @Entity
 public class Section {
-
+	
 	@Id
 	@Column(name="section_id")
 	@GeneratedValue
@@ -32,33 +31,49 @@ public class Section {
 	@Column(name="full_name")
 	private String fullName;
 
-	@ManyToOne
+	@ManyToOne(optional=true)
+	@Cascade({CascadeType.SAVE_UPDATE})
 	@JoinColumn(name="parent_section_id" )
 	private Section parent;
 
 	@OneToMany
-	@Cascade(CascadeType.ALL)
+	@Cascade({CascadeType.ALL})
 	@JoinTable(	name="section_article",
 				joinColumns=@JoinColumn(name="section_id"),
 				inverseJoinColumns=@JoinColumn(name="article_id") )
-	@OrderColumn(name="article_index")
-	private final List<Article> articles;
+	@OrderColumn
+	private List<Article> articles;
 
 	@OneToMany
-	@Cascade(CascadeType.ALL)
-	@OrderColumn(name="section_index")
-	private final List<Section> sections;
+	@Cascade({CascadeType.ALL}) //, CascadeType.DELETE_ORPHAN
+	@JoinTable( name="section_section",
+				joinColumns=@JoinColumn(name="section_id"),
+				inverseJoinColumns=@JoinColumn(name="subsection_id"))
+	@OrderColumn
+	private List<Section> sections;
 
 	public Section(){
-		// construct root
-		this("","");
+		this(null,"","");
+	}
+	
+	public Section(Long id){
+		this(id,"","");
 	}
 
 	public Section(String shortName){
-		this(shortName,shortName);
+		this(null,shortName,"");
 	}
 
+	public Section(Long id,String shortName){
+		this(id,shortName,"");
+	} 
+	
 	public Section(String shortName, String fullName){
+		this(null, shortName, fullName);
+	}
+
+	public Section(Long id,String shortName, String fullName){
+		this.id=id;
 		this.shortName=shortName;
 		this.fullName=fullName;
 		this.parent=null;
@@ -89,7 +104,23 @@ public class Section {
 			subSection.parent=this;
 		}
 	}
+	
+	public void removeSection(Section subSection){
+		subSection.setParent(null);
+		sections.remove(subSection);
+		// FIXME: Hibernate bug with unique constraint violation
+		// http://stackoverflow.com/questions/8773311/unique-constraint-violation-with-ordered-hibernate-list
+		sections=new ArrayList<>(sections); 
+	}
 
+	public void removeArticle(Article article) {
+		article.setSection(null);
+		articles.remove(article);
+		// FIXME: Hibernate bug with unique constraint violation
+		// http://stackoverflow.com/questions/8773311/unique-constraint-violation-with-ordered-hibernate-list
+		articles=new ArrayList<>(articles);
+	}
+	
 	public List<Section> getSections() {
 		return sections;
 	}
@@ -119,10 +150,13 @@ public class Section {
 	}
 
 	public String getHierarchyNumber() {
-		if (parent==null || parent.getSections().indexOf(this)==-1){
+		
+		//if (parent==null || parent.getSections().indexOf(this)==-1){
+		if (parent==null){
 			return "";
 		}
-		String myHierarchyNumber=String.valueOf(parent.getSections().indexOf(this)+1);
+		List<Section> parentChilds=parent.getSections();
+		String myHierarchyNumber=String.valueOf(parentChilds.indexOf(this)+1);
 		if (parent.parent==null){
 			return myHierarchyNumber;
 		}else{
@@ -144,6 +178,18 @@ public class Section {
 		}
 	}
 
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((fullName == null) ? 0 : fullName.hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result
+				+ ((shortName == null) ? 0 : shortName.hashCode());
+		return result;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
@@ -164,11 +210,6 @@ public class Section {
 				return false;
 		} else if (!id.equals(other.id))
 			return false;
-		if (parent == null) {
-			if (other.parent != null)
-				return false;
-		} else if (!parent.equals(other.parent))
-			return false;
 		if (shortName == null) {
 			if (other.shortName != null)
 				return false;
@@ -177,6 +218,18 @@ public class Section {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		if (parent!=null){
+			return "Section [id=" + id + ", shortName=" + shortName + ", fullName="	+ fullName + ", parent="+parent.id+"]";
+		}else{
+			return "Section [id=" + id + ", shortName=" + shortName + ", fullName="	+ fullName + ", parent=null]";
+		}
+	}
+
+	
+
+	
 
 
 }

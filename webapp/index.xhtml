@@ -8,22 +8,168 @@
 	xmlns:p="http://primefaces.org/ui">
 
 <h:head>
+<style>
+.ui-widget,
+.ui-widget .ui-widget
+{
+    font-size: 90% !important;
+}
+</style>
 </h:head>
 <h:body>
-	<h1>Hello World PrimeFaces</h1>
+	<h1>Knowledge base</h1>
 
-	<h:form>
-		<p:tree value="#{treeBean.root}" var="node" dynamic="true" cache="false" selectionMode="single"	selection="#{treeBean.selectedNode}" id="tree">
-			<p:ajax event="expand" 	listener="#{treeBean.onNodeExpand}" />
-			<p:ajax event="collapse"  listener="#{treeBean.onNodeCollapse}" />
-			<p:ajax event="select" listener="#{treeBean.onNodeSelect}" />
-			<p:ajax event="unselect" listener="#{treeBean.onNodeUnselect}" />
+	<h:form id="form">
+		<p:growl id="growl" showDetail="true" />
 
-			<p:treeNode>
-				<h:outputText value="#{node}" />
-			</p:treeNode>
-		</p:tree>
+		<p:layout style="height:500px;">
+			<p:layoutUnit position="west" size="350">
+				<p:toolbar>
+					<p:toolbarGroup align="left">
+						<p:menuButton value="Section">
+							<p:menuitem value="New" onclick="newSectionEditDialog.show()" />
+							<p:menuitem value="Edit" onclick="sectionEditDialog.show()" />
+							<p:menuitem value="Delete" onclick="confirmDeleteSectionDialog.show()" />
+							<p:menuitem value="Reload tree" actionListener="#{treeBean.reloadTree()}" update=":form:growl,:form:tree,:form:viewSide"/>
+						</p:menuButton>
+						<p:menuButton value="Article">
+							<p:menuitem value="New" onclick="newArticleEditDialog.show()" />
+							<p:menuitem value="Edit" onclick="articleEditDialog.show()" />
+							<p:menuitem value="Delete" onclick="confirmDeleteArticleDialog.show()" />
+						</p:menuButton>
+					</p:toolbarGroup>
+				</p:toolbar>
+				<p:tree value="#{treeBean.root}" var="node" dynamic="true"	cache="false" selectionMode="single" selection="#{treeBean.selectedNode}" id="tree">
+					<p:ajax event="select"	update=":form:growl,tree,:form:viewSide,:form_se:section_edit,:form_ae:article_edit" listener="#{treeBean.onNodeSelect}" />
+					<p:treeNode>
+						<h:outputText value="#{node.shortName}" />
+					</p:treeNode>
+					
+				</p:tree>
+			</p:layoutUnit>
+
+			<p:layoutUnit position="center" size="450">
+				<p:panel id="viewSide">
+					<p>
+						<h:outputText id="breadcrumb" value="#{treeBean.breadCrumb}" />
+					</p>
+					<h1>
+						<h:outputText id="updme" value="#{treeBean.currentArticle.fullName}" />
+					</h1>
+					<p>
+						<h:outputText escape="false" value="#{treeBean.currentArticle.text}" />
+					</p>
+					
+					<p><h:outputText value="sections:" rendered="#{treeBean.thisSectionSubSections.size()>0}"/></p>
+					<ul>
+					<ui:repeat value="#{treeBean.thisSectionSubSections}" var="section">
+						<li><h:outputText value="#{section.shortName}" /></li>
+					</ui:repeat>
+					</ul>
+					
+					<p><h:outputText value="articles:" rendered="#{treeBean.thisSectionArticles.size()>0}"/></p>
+					<ul>
+					<ui:repeat value="#{treeBean.thisSectionArticles}" var="article">
+						<li><h:outputText value="#{article.shortName}" /></li>
+					</ui:repeat>
+					</ul>
+				</p:panel>
+			</p:layoutUnit>
+
+		</p:layout>
+
 	</h:form>
+	
+	<p:dialog id="sectionEditDialog" widgetVar="sectionEditDialog">
+	<h:form id="form_se">
+		<p:panelGrid id="section_edit" columns="2">
+			<p:outputLabel for="sectionShortName" value="shortName"/>
+			<p:inputText id="sectionShortName" value="#{treeBean.currentSection.shortName}" size="80"/>
+			
+			<p:outputLabel for="sectionFullName" value="fullName"/>
+			<p:inputText id="sectionFullName" value="#{treeBean.currentSection.fullName}" size="80"/>
+			<p:commandButton 
+				actionListener="#{treeBean.saveSection}" 
+				update=":form:tree,:form:viewSide,:form:growl"
+				value="save section" oncomplete="sectionEditDialog.hide()"/>
+		</p:panelGrid>
+	</h:form>
+	</p:dialog>
+	
+	<p:dialog id="newSectionEditDialog" widgetVar="newSectionEditDialog">
+	<h:form>
+		<p:panelGrid id="new_section_edit" columns="2">
+			<p:outputLabel for="newSectionShortName" value="shortName"/>
+			<p:inputText id="newSectionShortName" value="#{treeBean.newSection.shortName}" size="80"/>
+			
+			<p:outputLabel for="newSectionFullName" value="fullName"/>
+			<p:inputText id="newSectionFullName" value="#{treeBean.newSection.fullName}" size="80"/>
+			<p:commandButton 
+				actionListener="#{treeBean.newSectionSameLevel}" 
+				update=":form:tree,:form:viewSide,:form:growl"
+				value="save same level" oncomplete="newSectionEditDialog.hide()"/>
+				
+			<p:commandButton 
+				actionListener="#{treeBean.newSectionSubling}" 
+				update=":form:tree,:form:viewSide,:form:growl"
+				value="save as subling" oncomplete="newSectionEditDialog.hide()"/>
+		</p:panelGrid>
+	</h:form>
+	</p:dialog>
+	
+	<p:dialog id="articleEditDialog" widgetVar="articleEditDialog">
+	<h:form id="form_ae">
+		<p:panelGrid id="article_edit" columns="2">
+			<p:outputLabel for="articleShortName" value="shortName"/>
+			<p:inputText id="articleShortName" value="#{treeBean.currentArticle.shortName}" size="80"/>
+			
+			<p:outputLabel for="articleFullName" value="fullName"/>
+			<p:inputText id="articleFullName" value="#{treeBean.currentArticle.fullName}" size="80"/>
+			
+			<p:outputLabel for="articleText" value="text"/>
+			<p:editor id="articleText"  value="#{treeBean.currentArticle.text}"/>
+			<p:commandButton 
+				actionListener="#{treeBean.saveArticle}" 
+				update="article_edit,:form:tree,:form:viewSide,:form:growl"
+				value="save article" oncomplete="articleEditDialog.hide()"/>
+		</p:panelGrid>
+	</h:form>
+	</p:dialog>
+	
+	<p:dialog id="newArticleEditDialog" widgetVar="newArticleEditDialog">
+	<h:form>
+		<p:panelGrid id="new_article_edit" columns="2">
+			<p:outputLabel for="newArticleShortName" value="shortName"/>
+			<p:inputText id="newArticleShortName" value="#{treeBean.newArticle.shortName}" size="80"/>
+			
+			<p:outputLabel for="newArticleFullName" value="fullName"/>
+			<p:inputText id="newArticleFullName" value="#{treeBean.newArticle.fullName}" size="80"/>
+			
+			<p:outputLabel for="newArticleText" value="text"/>
+			<p:editor id="newArticleText"  value="#{treeBean.newArticle.text}"/>
+			<p:commandButton 
+				actionListener="#{treeBean.saveNewArticle}" 
+				update="new_article_edit,:form:tree,:form:viewSide,:form:growl"
+				value="save article" oncomplete="newArticleEditDialog.hide()"/>
+		</p:panelGrid>
+	</h:form>
+	</p:dialog>
+	
+	<p:confirmDialog id="confirmDeleteArticleDialog" message="You are about to delete article. Are you Sure?" header="Delete Article?" widgetVar="confirmDeleteArticleDialog">
+	<h:form>
+		<p:commandButton id="confirm" value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteArticleDialog.hide()"  
+                    actionListener="#{treeBean.deleteArticle}" />  
+        <p:commandButton id="decline" value="No" onclick="confirmDeleteArticleDialog.hide()" type="button" />  
+	</h:form>
+	</p:confirmDialog>
+	
+	<p:confirmDialog id="confirmDeleteSectionDialog" message="You are about to delete section. Are you Sure?" header="Delete Article?" widgetVar="confirmDeleteSectionDialog">
+	<h:form>
+		<p:commandButton id="confirm" value="Yes" update=":form:tree,:form:viewSide,:form:growl" oncomplete="confirmDeleteSectionDialog.hide()"  
+                    actionListener="#{treeBean.deleteSection}" />  
+        <p:commandButton id="decline" value="No" onclick="confirmDeleteSectionDialog.hide()" type="button" />  
+	</h:form>
+	</p:confirmDialog>
 
 </h:body>
 </html>

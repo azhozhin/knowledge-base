@@ -1,22 +1,29 @@
 package webapp;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
 
+
 import org.primefaces.event.NodeCollapseEvent;
 import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.event.NodeUnselectEvent;
+
 import org.primefaces.model.DefaultTreeNode;
+
 import org.primefaces.model.TreeNode;
 
-import utils.Link;
 
-import dao.SectionDAO;
+import utils.EntityHolder;
+import utils.Utils;
+import utils.WebAppHelper;
+
+import dao.DAO;
 import domain.Article;
 import domain.Section;
 
@@ -26,30 +33,44 @@ public class TreeBean implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private TreeNode root;
+	private TreeNode treeRoot;
+	private Section rootSection;
 
+	private boolean articleRendered;
+	private Section currentSection;
+	private Section newSection;
+	private Article currentArticle;
+	private Article newArticle;
+	
 	private TreeNode selectedNode;
-
+	
+	private String breadCrumb="";
+	
+	private List<Section> thisSectionSubSections;
+	private List<Article> thisSectionArticles;
+	
 	public TreeBean() {
-		root = new DefaultTreeNode("Root", null);
-		SectionDAO.beginTransaction();
-		Section rootSection= SectionDAO.load();
-		SectionDAO.commitTransaction();
-		recursiveLoad(root, rootSection);
+		reloadTree();
+		newSection=new Section("");
+		newArticle=new Article("");
 	}
 	
-	private void recursiveLoad(TreeNode node, Section sect){
-		for (Section s:sect.getSections()){
-			TreeNode n=new DefaultTreeNode(s.getShortName(),node);
-			recursiveLoad(n, s);
+	public void reloadTree(){
+		DAO.beginTransaction();
+		rootSection= DAO.loadSectionRootLevel();
+		DAO.commitTransaction();
+		
+		treeRoot = Utils.makeTreeRoot(rootSection);
+		
+		if (rootSection==null){
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Cannot load any section","There is no section to load"));
+		}else{
+			Utils.loadNodeSection(treeRoot, rootSection);
 		}
-		for (Article a:sect.getArticles()){
-			TreeNode n=new DefaultTreeNode(a.getShortName(),node);
-		}
-	}
+	}  
 
 	public TreeNode getRoot() {
-		return root;
+		return treeRoot;
 	}
 
 	public TreeNode getSelectedNode() {
@@ -60,27 +81,202 @@ public class TreeBean implements Serializable {
 		this.selectedNode = selectedNode;
 	}
 
-	public void onNodeExpand(NodeExpandEvent event) {
-		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Expanded", event.getTreeNode().toString());
-
-		FacesContext.getCurrentInstance().addMessage(null, message);
-	}
-
-	public void onNodeCollapse(NodeCollapseEvent event) {
-		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Collapsed", event.getTreeNode().toString());
-
-		FacesContext.getCurrentInstance().addMessage(null, message);
-	}
-
 	public void onNodeSelect(NodeSelectEvent event) {
+		Section currentNodeSection;
 		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Selected", event.getTreeNode().toString());
-
 		FacesContext.getCurrentInstance().addMessage(null, message);
+		
+		TreeNode treeNode=event.getTreeNode();
+		EntityHolder entityHolder=(EntityHolder)treeNode.getData();
+		
+		if (entityHolder.getType()=="section"){
+			currentNodeSection=(Section)entityHolder.getRef();
+			
+			// we have no child nodes, lets try load some
+			if (treeNode.getChildCount()==0){
+				DAO.beginTransaction();
+				//rootSection=DAO.mergeSection(rootSection);
+				DAO.updateSection(rootSection);
+				currentNodeSection=Utils.findPersistentSection(rootSection,currentNodeSection);
+				currentNodeSection=DAO.loadSectionOneLevel(currentNodeSection);
+				DAO.commitTransaction();
+				
+				Utils.loadNodeSection(event.getTreeNode(), currentNodeSection);
+			}
+			
+			articleRendered=false;
+			currentSection=currentNodeSection;
+			currentArticle=null;
+			thisSectionArticles=currentNodeSection.getArticles();
+			thisSectionSubSections=currentNodeSection.getSections();
+		}else{
+			Article currentNodeArticle=(Article)entityHolder.getRef();
+			currentNodeSection=currentNodeArticle.getSection();
+
+			DAO.beginTransaction();
+			currentArticle=DAO.loadArticle(currentNodeArticle);
+			DAO.commitTransaction();
+			
+			articleRendered=true;
+			currentSection=null;
+			thisSectionArticles=null;
+			thisSectionSubSections=null;
+		}
+		
+	}
+	
+	public void saveArticle(){
+		WebAppHelper.saveArticle(treeRoot, rootSection, currentArticle);
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Article saved"));
+	}  
+	
+	public void saveSection(){
+		WebAppHelper.saveSection(treeRoot, rootSection, currentSection);
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Section saved"));
+	}
+	
+	public void deleteSection(){
+		if (selectedNode!=null){
+			EntityHolder eh=(EntityHolder)selectedNode.getData();
+			if (eh.getType()=="section"){
+				selectedNode = selectedNode.getParent();
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Section deleted"+currentSection));
+				WebAppHelper.deleteSection(treeRoot, rootSection, currentSection);
+			}else{
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select section"));
+			}
+		}else{
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select anything"));
+		}
+	}
+	
+	public void newSectionSameLevel(){
+		if (selectedNode!=null){
+			EntityHolder eh=(EntityHolder)selectedNode.getData();
+			if (eh.getType()=="section"){
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Section created"));
+				WebAppHelper.insertSection(treeRoot, rootSection, currentSection, newSection, false);
+
+			}else{
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select section"));
+			}
+		}else{
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select anything"));
+		}
+	}
+	
+	public void newSectionSubling(){
+		if (selectedNode!=null){
+			EntityHolder eh=(EntityHolder)selectedNode.getData();
+			if (eh.getType()=="section"){
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Section created"));
+				WebAppHelper.insertSection(treeRoot, rootSection, currentSection, newSection, true);
+			}else{
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select section"));
+			}
+		}else{
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select anything"));
+		}
+	}
+	
+	public void saveNewArticle(){
+		if (selectedNode!=null){
+			EntityHolder eh=(EntityHolder)selectedNode.getData();
+			if (eh.getType()=="section"){
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Article created"));
+				WebAppHelper.insertArticle(treeRoot, rootSection, currentSection, newArticle);
+			}else{
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Selected wrong type"));
+			}
+		}else{
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select anything"));
+		}
 	}
 
-	public void onNodeUnselect(NodeUnselectEvent event) {
-		FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Unselected", event.getTreeNode().toString());
-
-		FacesContext.getCurrentInstance().addMessage(null, message);
+	public void deleteArticle(){
+		if (selectedNode!=null){
+			EntityHolder eh=(EntityHolder)selectedNode.getData();
+			if (eh.getType()=="article"){
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Section deleted"+currentArticle));
+				WebAppHelper.deleteArticle(treeRoot, rootSection, currentArticle);
+			}else{
+				FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select article"));
+			}
+		}else{
+			FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("You should select anything"));
+		}
 	}
+	
+	public String getBreadCrumb() {
+		if (selectedNode==null){
+			return "";
+		}
+		
+		EntityHolder eh=(EntityHolder)selectedNode.getData();
+		breadCrumb=Utils.makeBreadCrumb(eh);
+		
+		return breadCrumb;
+	}
+
+	public void setBreadCrumb(String breadCrumb) {
+		this.breadCrumb = breadCrumb;
+	}
+
+	public Article getCurrentArticle() {
+		return currentArticle;
+	}
+
+	public void setCurrentArticle(Article currentArticle) {
+		this.currentArticle = currentArticle;
+	}
+
+	public boolean isArticleRendered() {
+		return articleRendered;
+	}
+
+	public void setArticleRendered(boolean articleRendered) {
+		this.articleRendered = articleRendered;
+	}
+
+	public Section getCurrentSection() {
+		return currentSection;
+	}
+
+	public void setCurrentSection(Section currentSection) {
+		this.currentSection = currentSection;
+	}
+
+	public Section getNewSection() {
+		return newSection;
+	}
+
+	public void setNewSection(Section newSection) {
+		this.newSection = newSection;
+	}
+
+	public Article getNewArticle() {
+		return newArticle;
+	}
+
+	public void setNewArticle(Article newArticle) {
+		this.newArticle = newArticle;
+	}
+
+	public List<Section> getThisSectionSubSections() {
+		return thisSectionSubSections;
+	}
+
+	public void setThisSectionSubSections(List<Section> thisSectionSubSections) {
+		this.thisSectionSubSections = thisSectionSubSections;
+	}
+
+	public List<Article> getThisSectionArticles() {
+		return thisSectionArticles;
+	}
+
+	public void setThisSectionArticles(List<Article> thisSectionArticles) {
+		this.thisSectionArticles = thisSectionArticles;
+	}
+	
+	
 }

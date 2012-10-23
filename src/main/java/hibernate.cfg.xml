@@ -14,7 +14,7 @@
 		<property name="current_session_context_class">thread</property>
 		
 		<property name="show_sql">true</property>
-		<property name="hbm2ddl.auto">verify</property>
+		<property name="hbm2ddl.auto">update</property>
 		
 		<mapping class="domain.Section" />
 		<mapping class="domain.Article" />
