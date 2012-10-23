@@ -50,14 +50,14 @@ public class WebAppHelperShould {
 		Article art3=new Article("Misc things in section 1.1.1");
 		one_one_one.addArticle(art3);
 		
-		DAO.beginTransaction();
-		DAO.removeAllSections();
-		DAO.saveSection(rootInRAM);
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		DAO.getInstance().removeAllSections();
+		DAO.getInstance().saveSection(rootInRAM);
+		DAO.getInstance().commitTransaction();
 		
-		DAO.beginTransaction();
-		rootFromDB=DAO.loadAllSectons();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		rootFromDB=DAO.getInstance().loadAllSectons();
+		DAO.getInstance().commitTransaction();
 		
 		rootTreeNode=Utils.makeTreeRoot(rootFromDB);
 		Utils.loadNodeSection(rootTreeNode, rootFromDB);
@@ -68,7 +68,7 @@ public class WebAppHelperShould {
 	}
 
 	@Test
-	public void testDeleteArticle() {
+	public void beAbleToDeleteArticle() {
 		TreeNode articleNode=Utils.findArticleInTreeByName(rootTreeNode, "Thing about bees in section 1.1");
 		
 		
@@ -93,8 +93,7 @@ public class WebAppHelperShould {
 	}
 
 	@Test
-	public void testDeleteSection() {
-		Utils.print(rootTreeNode,0);
+	public void beAbleToDeleteSection() {
 		TreeNode sectionNode=Utils.findSectionInTreeByName(rootTreeNode, "section 2");
 		
 		EntityHolder eh=(EntityHolder)sectionNode.getData();
@@ -131,11 +130,7 @@ public class WebAppHelperShould {
 
 	@Test
 	public void beAbleToInsertSectionAsSubling() {
-		TreeNode sectionNode=Utils.findSectionInTreeByName(rootTreeNode, "section 2");
-		
-		EntityHolder eh=(EntityHolder)sectionNode.getData();
-		Section section=(Section)eh.getRef();
-		
+
 		// Old state
 		assertEquals(4, rootFromDB.getSections().size());
 		assertEquals("section 1", rootFromDB.getSections().get(0).getShortName());
@@ -173,11 +168,6 @@ public class WebAppHelperShould {
 	
 	@Test
 	public void beAbleToInsertSectionOnSameLevel() {
-		TreeNode sectionNode=Utils.findSectionInTreeByName(rootTreeNode, "section 2");
-		
-		EntityHolder eh=(EntityHolder)sectionNode.getData();
-		Section section=(Section)eh.getRef();
-
 		// Old state
 		assertEquals(4, rootFromDB.getSections().size());
 		assertEquals("section 1", rootFromDB.getSections().get(0).getShortName());
@@ -213,11 +203,7 @@ public class WebAppHelperShould {
 	}
 	
 	@Test
-	public void testInsertArticle() {
-TreeNode sectionNode=Utils.findSectionInTreeByName(rootTreeNode, "section 2");
-		
-		EntityHolder eh=(EntityHolder)sectionNode.getData();
-		Section section=(Section)eh.getRef();
+	public void beAbleToInsertArticleInAnyPlace() {
 
 		// Old state
 		assertEquals(4, rootFromDB.getSections().size());

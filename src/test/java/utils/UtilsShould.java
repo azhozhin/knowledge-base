@@ -73,7 +73,7 @@ public class UtilsShould {
 	}
 	
 	@Test 
-	public void bAbleToLoadNodeSection(){
+	public void beAbleToLoadNodeSection(){
 		assertEquals(4, treeRoot.getChildCount());
 		assertEquals("1. section 1", ((EntityHolder)treeRoot.getChildren().get(0).getData()).getShortName());
 		assertEquals("2. section 2", ((EntityHolder)treeRoot.getChildren().get(1).getData()).getShortName());

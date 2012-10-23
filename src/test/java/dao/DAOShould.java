@@ -50,34 +50,34 @@ public class DAOShould {
 		Article art3=new Article("Misc things in section 1.1.1");
 		one_one_one.addArticle(art3);
 		
-		DAO.beginTransaction();
-		DAO.removeAllSections();
-		DAO.saveSection(rootInRAM);
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		DAO.getInstance().removeAllSections();
+		DAO.getInstance().saveSection(rootInRAM);
+		DAO.getInstance().commitTransaction();
 	}
 	
 	@Test 
 	public void beAbleLoadTreeStepByStep(){
 		
-		DAO.beginTransaction();
-		Section result0=DAO.loadSectionRootLevel();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		Section result0=DAO.getInstance().loadSectionRootLevel();
+		DAO.getInstance().commitTransaction();
 		
 		for(Section s:result0.getSections()){
 			System.out.println(s);
 		}
 		
-		DAO.beginTransaction();
+		DAO.getInstance().beginTransaction();
 		//result0=DAO.mergeSection(result0);
-		DAO.updateSection(result0);
-		Section result1=DAO.loadSectionOneLevel(result0.getSections().get(0));
-		DAO.commitTransaction();
+		DAO.getInstance().updateSection(result0);
+		Section result1=DAO.getInstance().loadSectionOneLevel(result0.getSections().get(0));
+		DAO.getInstance().commitTransaction();
 		
-		DAO.beginTransaction();
+		DAO.getInstance().beginTransaction();
 		//result0=DAO.mergeSection(result0);
-		DAO.updateSection(result0);
-		Section result2=DAO.loadSectionOneLevel(result0.getSections().get(0).getSections().get(0));
-		DAO.commitTransaction();
+		DAO.getInstance().updateSection(result0);
+		Section result2=DAO.getInstance().loadSectionOneLevel(result0.getSections().get(0).getSections().get(0));
+		DAO.getInstance().commitTransaction();
 		
 		assertEquals(result0.getSections().get(0), result1);
 		assertEquals(result1.getSections().get(0), result2);
@@ -95,9 +95,9 @@ public class DAOShould {
 
 	@Test
 	public void beAbleToSaveAndLoadComplexTree() {
-		DAO.beginTransaction();
-		Section result=DAO.loadAllSectons();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		Section result=DAO.getInstance().loadAllSectons();
+		DAO.getInstance().commitTransaction();
 		
 		assertEquals("1", result.getSections().get(0).getHierarchyNumber());
 		assertEquals("2", result.getSections().get(1).getHierarchyNumber());
@@ -113,9 +113,9 @@ public class DAOShould {
 	@Test
 	public void beAbleToLoadRootLevelFromRootHierarchy(){
 		
-		DAO.beginTransaction();
-		Section result=DAO.loadSectionRootLevel();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		Section result=DAO.getInstance().loadSectionRootLevel();
+		DAO.getInstance().commitTransaction();
 		
 		assertEquals(4, result.getSections().size());
 		
@@ -132,11 +132,11 @@ public class DAOShould {
 	@Test
 	public void beAbleToLoadOneLevelForConcreteSectionHierarchy(){
 		
-		DAO.beginTransaction();
-		Section from=DAO.findSectionByShortName("section 1");
+		DAO.getInstance().beginTransaction();
+		Section from=DAO.getInstance().findSectionByShortName("section 1");
 
-		Section result=DAO.loadSectionOneLevel(from);
-		DAO.commitTransaction();
+		Section result=DAO.getInstance().loadSectionOneLevel(from);
+		DAO.getInstance().commitTransaction();
 		
 		assertEquals(1, result.getSections().size());
 		assertEquals("section 1.1", result.getSections().get(0).getShortName());
@@ -179,14 +179,14 @@ public class DAOShould {
 
 	@Test
 	public void beAbleToDeleteSingleSectionOnRootLevel(){
-		DAO.beginTransaction();
-		Section section3=DAO.findSectionByShortName("section 3");
-		DAO.deleteSection(section3);
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		Section section3=DAO.getInstance().findSectionByShortName("section 3");
+		DAO.getInstance().deleteSection(section3);
+		DAO.getInstance().commitTransaction();
 		
-		DAO.beginTransaction();
-		Section result=DAO.loadSectionRootLevel();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		Section result=DAO.getInstance().loadSectionRootLevel();
+		DAO.getInstance().commitTransaction();
 		
 		assertNotNull(result);
 		assertEquals(3, result.getSections().size());
@@ -199,15 +199,15 @@ public class DAOShould {
 	public void beAbleToDeleteSingleSectionWithItContents(){
 		Section result=null;
 		
-		DAO.beginTransaction();
-		Section result0=DAO.loadSectionRootLevel();
+		DAO.getInstance().beginTransaction();
+		Section result0=DAO.getInstance().loadSectionRootLevel();
 		Section section1=result0.getSections().get(0);
-		DAO.deleteSection(section1);
-		DAO.commitTransaction();
+		DAO.getInstance().deleteSection(section1);
+		DAO.getInstance().commitTransaction();
 
-		DAO.beginTransaction();
-		result=DAO.loadSectionRootLevel();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		result=DAO.getInstance().loadSectionRootLevel();
+		DAO.getInstance().commitTransaction();
 
 		assertNotNull(result);
 		assertEquals(3, result.getSections().size());
@@ -220,15 +220,15 @@ public class DAOShould {
 	public void beAbleToDeleteSingleNestedSectionWithItContents(){
 		Section result=null;
 		
-		DAO.beginTransaction();
-		Section result0=DAO.loadSectionRootLevel();
+		DAO.getInstance().beginTransaction();
+		Section result0=DAO.getInstance().loadSectionRootLevel();
 		Section section1=result0.getSections().get(0).getSections().get(0);
-		DAO.deleteSection(section1);
-		DAO.commitTransaction();
+		DAO.getInstance().deleteSection(section1);
+		DAO.getInstance().commitTransaction();
 
-		DAO.beginTransaction();
-		result=DAO.loadAllSectons();
-		DAO.commitTransaction();
+		DAO.getInstance().beginTransaction();
+		result=DAO.getInstance().loadAllSectons();
+		DAO.getInstance().commitTransaction();
 
 		assertNotNull(result);
 		assertEquals(4, result.getSections().size());
