@@ -18,7 +18,17 @@ import org.xml.sax.SAXException;
 import domain.Article;
 import domain.Section;
 
-
+/**
+ * ConfigLoader is special purpose loader for parse data in xml format
+ * There are sections and articles
+ * section list is represented by <sections>...</sections>
+ * article list is represented by <articles>...</articles>
+ * section is represented by <section>...</section>
+ * section can hold list of other sections
+ * section can hold list of articles
+ * article is represented by <article>...</article>
+ * article can hold nothing
+ */
 public class ConfigLoader {
 
 	private Document dom=null;
@@ -30,6 +40,13 @@ public class ConfigLoader {
 		db=dbf.newDocumentBuilder();
 	}
 
+	/**
+	 * Parses data from input string
+	 * @param source  string with data in xml format
+	 * @return parsed Section in tree form
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public Section parseFromSource(String source) throws SAXException, IOException {
 		InputStream is=new ByteArrayInputStream(source.getBytes());
 		dom=db.parse(is);
@@ -37,12 +54,24 @@ public class ConfigLoader {
 		return loadAll(dom);
 	}
 	
+	/**
+	 * Parses data from external file
+	 * @param filename  path to file
+	 * @return parsed Section in tree form
+	 * @throws SAXException
+	 * @throws IOException
+	 */
 	public Section parseFromFile(String filename) throws SAXException, IOException{
 		dom=db.parse(filename);
 
 		return loadAll(dom);
 	}
 
+	/**
+	 * Load all entities from dom
+	 * @param dom complete dom object
+	 * @return loaded section in tree form
+	 */
 	public Section loadAll(Document dom){
 		Section rootSection=new Section();
 		if(dom!=null){
@@ -55,6 +84,12 @@ public class ConfigLoader {
 		return rootSection;
 	}
 
+	/**
+	 * Loads Sections list from <sections>...</sections> tags
+	 * calls loadSection for every section occurrence 
+	 * @param node current DOM node
+	 * @return list of sections
+	 */
 	private List<Section> loadSections(Node node){
 		List<Section> result=new ArrayList<Section>();
 		NodeList children = node.getChildNodes();
@@ -70,6 +105,14 @@ public class ConfigLoader {
 		return result;
 	}
 
+	/**
+	 * Loads One section from <section>...</section> tags
+	 * Section have shortName and fullName coded as attributes
+	 * Section can have subsections represented by <sections>...</sections>, calls loadSections
+	 * Section can have articles represented by <articles>...</articles>, calls loadArticles
+	 * @param node current DOM node
+	 * @return section in tree form
+	 */
 	private Section loadSection(Node node) {
 		Section result;
 
@@ -104,6 +147,11 @@ public class ConfigLoader {
 		return result;
 	}
 
+	/**
+	 * Loads articles list from <articles>...</articles>, calls loadArticle 
+	 * @param node current DOM node
+	 * @return list of articles
+	 */
 	private List<Article> loadArticles(Node node) {
 		List<Article> result=new ArrayList<Article>();
 		NodeList children = node.getChildNodes();
@@ -119,6 +167,13 @@ public class ConfigLoader {
 		return result;
 	}
 
+	/**
+	 * Loads one article from <article>...</article>
+	 * Article have shortName and fullName coded as attributes
+	 * Article can have text coded in <![CDATA[...]]> section  
+	 * @param node current DOM node
+	 * @return article
+	 */
 	private Article loadArticle(Node node) {
 		Article result;
 		

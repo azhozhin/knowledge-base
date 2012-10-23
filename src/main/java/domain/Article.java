@@ -7,9 +7,14 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
 import org.hibernate.annotations.Type;
-
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 
 @Entity
+@Indexed
 public class Article {
 	
 	@Id
@@ -17,12 +22,15 @@ public class Article {
 	@GeneratedValue
 	private Long id;
 	
+	@Field(index=Index.YES, analyze=Analyze.YES, store=Store.NO)
 	@Column(name="short_name")
 	private String shortName;
 	
+	@Field(index=Index.YES, analyze=Analyze.YES, store=Store.NO)
 	@Column(name="full_name")
 	private String fullName;
 	
+	@Field(index=Index.YES, analyze=Analyze.YES, store=Store.NO)
 	@Column(name="body_text")
 	@Lob
 	@Type(type = "org.hibernate.type.TextType")	
@@ -55,6 +63,7 @@ public class Article {
 	public Article(String shortName, String fullName, String text) {
 		this(null, shortName, fullName, text);
 	}
+	
 	public Article(Long id,String shortName, String fullName, String text) {
 		this.id=id;
 		this.shortName=shortName;
@@ -63,7 +72,6 @@ public class Article {
 	}
 	
 	
-
 	public Long getId() {
 		return id;
 	}

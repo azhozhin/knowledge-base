@@ -16,7 +16,6 @@ import javax.persistence.OrderColumn;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 
-
 @Entity
 public class Section {
 	
