@@ -6,6 +6,8 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.Type;
+
 
 @Entity
 public class Article {
@@ -23,6 +25,8 @@ public class Article {
 	
 	@Column(name="body_text")
 	@Lob
+	@Type(type = "org.hibernate.type.TextType")	
+	// FIXME: Hibernate bug with PostgreSQL and @Lob encoding 	
 	private String text;
 	
 	@ManyToOne
